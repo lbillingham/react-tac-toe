@@ -52,37 +52,45 @@ class Game extends React.Component {
             history: [{
                 squares: Array(9).fill(null),
             }],
-           xIsNext: true,
+            stepNumber: 0,
+            xIsNext: true,
         };
     }
 
 
     handleClick(i) {
-        const history = this.state.history;
+        const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
         const squares = current.squares.slice();
         if (claculateWinner(squares) || squares[i]) {
             return;
         }
-        squares[i] = this.state.xIsNext ? 'X' : 'O';
+        squares[i] = this.state.xIsNext ? xString() : oString();
         this.setState({
             history: history.concat([{
                 squares: squares,
             }]),
+            stepNumber: history.length,
             xIsNext: !this.state.xIsNext,
         });
     }
 
+    jumpTo(step) {
+        this.setState({
+            stepNumber: step,
+            xIsNext: (step % 2) === 0,
+        })
+    }
 
     render() {
         const history = this.state.history;
-        const current = history[history.length - 1];
+        const current = history[this.state.stepNumber];
         const winner = claculateWinner(current.squares);
 
         const moves = history.map((step, move) => {
             const desc = move ? 'Go to move #' + move : 'Go to game start';
             return (
-                <li>
+                <li key={move}>
                     <button onClick={() => this.jumpTo(move)}>{desc}</button>
                 </li>
             );
@@ -92,13 +100,17 @@ class Game extends React.Component {
         if (winner) {
             status = 'Winner: ' + winner;
         } else {
-            status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-
+            if (current.squares.indexOf(null) > -1){
+                status = 'Next player: ' + (this.state.xIsNext ? xString() : oString());
+            } else {
+                status = 'Game drawn';
+            }
         }
 
         return (
             <div className="game">
                 <div className="game-board">
+                <h1>{oString()} & {xString()}</h1>
                     <Board
                         squares={current.squares}
                         onClick={(i) => this.handleClick(i)}
@@ -131,11 +143,21 @@ function claculateWinner(squares) {
         [0, 4, 8],
         [2, 4, 6],
     ];
-    for (let i =0; i < lines.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]){
             return squares[a];
         }
     }
     return null;
+}
+
+
+function xString() {
+    return String.fromCodePoint(0x1f620);
+}
+
+
+function oString() {
+    return  String.fromCodePoint(0x1f6a2);
 }
